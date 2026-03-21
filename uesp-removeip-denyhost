@@ -44,6 +44,7 @@ function removeip() {
 	removeipfile "$DENYHOST_PATH/hosts-valid" $ipaddress
 	removeipfile "$DENYHOST_PATH/users-hosts" $ipaddress
 	
+	iptables -D INPUT -s "$ipaddress" -j DROP
 }
 
 if [[ $# -le 0 ]]; then
@@ -52,23 +53,35 @@ if [[ $# -le 0 ]]; then
 	exit 2
 fi
 
-$DENYHOST_SERVICE stop
+if [ ! -f "$DENYHOST_SERVICE" ]; then
+	denyhosts-daemon-control stop
+	
+	for ipaddress in "$@"
+	do
+		removeip $ipaddress
+	done
+	
+	denyhosts-daemon-control start
+else
 
-if [[ $? -ne 0 ]]; then
-	echo "Warning: Failed to stop the denyhosts service!"
+	$DENYHOST_SERVICE stop
+	
+	if [[ $? -ne 0 ]]; then
+		echo "Warning: Failed to stop the denyhosts service!"
+	fi
+	
+	for ipaddress in "$@"
+	do
+		removeip $ipaddress
+	done
+	
+	
+	$DENYHOST_SERVICE start
+	
+	if [[ $? -ne 0 ]]; then
+		echo "Error: Failed to restart the denyhosts service!"
+		exit 1
+	fi
+	
+	echo "Successfully restarted the denyhosts service."
 fi
-
-for ipaddress in "$@"
-do
-	removeip $ipaddress
-done
-
-
-$DENYHOST_SERVICE start
-
-if [[ $? -ne 0 ]]; then
-	echo "Error: Failed to restart the denyhosts service!"
-	exit 1
-fi
-
-echo "Successfully restarted the denyhosts service."
