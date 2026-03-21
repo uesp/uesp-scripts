@@ -13,45 +13,70 @@ echo Started.
 while true; do
 		# Job types that need to be run ASAP mo matter how many of them are in the queue
 		# Those jobs should be very "cheap" to run
-	php71 $RJ --type="enotifNotify" --memory-limit=max --uesplang=en
-	php71 $RJ --type="htmlCacheUpdate" --maxjobs=50 --memory-limit=max --uesplang=en
+	php71 $RJ --type="enotifNotify" --memory-limit=max --server=https://en.uesp.net
+	sleep 1
+	php71 $RJ --type="htmlCacheUpdate" --maxjobs=50 --memory-limit=max --server=https://en.uesp.net
+	sleep 1
 		
 		# Everything else, limit the number of jobs on each batch
 		# The --wait parameter will pause the execution here until new jobs are added,
 		# to avoid running the loop without anything to do
-	php71 $RJ --type="webVideoTranscode" --maxjobs=5 --memory-limit=max --uesplang=en
-	php71 $RJ --type=refreshLinksPrioritized --maxjobs=50 --memory-limit=max --uesplang=en
-	php71 $RJ --type=refreshLinksDynamic --maxjobs=50 --memory-limit=max --uesplang=en
-	php71 $RJ --type=refreshLinks --maxjobs=50 --memory-limit=max --uesplang=en
-	php71 $RJ --type=recentChangesUpdate --maxjobs=50 --memory-limit=max --uesplang=en
-	php71 $RJ --type=cirrusSearchLinksUpdate --maxjobs=50 --memory-limit=max --uesplang=en
-	php71 $RJ --type=cirrusSearchIncomingLinkCount --maxjobs=50 --memory-limit=max --uesplang=en
-	php71 $RJ --maxjobs=10 --memory-limit=max --uesplang=en
+	php71 $RJ --type="webVideoTranscode" --maxjobs=5 --memory-limit=max --server=https://en.uesp.net
+	sleep 1
+	php71 $RJ --type=refreshLinksPrioritized --maxjobs=50 --memory-limit=max --server=https://en.uesp.net
+	sleep 1
+	php71 $RJ --type=refreshLinksDynamic --maxjobs=50 --memory-limit=max --server=https://en.uesp.net
+	sleep 1
+	php71 $RJ --type=refreshLinks --maxjobs=50 --memory-limit=max --server=https://en.uesp.net
+	sleep 1
+	php71 $RJ --type=recentChangesUpdate --maxjobs=50 --memory-limit=max --server=https://en.uesp.net
+	sleep 1
+	php71 $RJ --type=cirrusSearchLinksUpdate --maxjobs=50 --memory-limit=max --server=https://en.uesp.net
+	sleep 1
+	php71 $RJ --type=cirrusSearchIncomingLinkCount --maxjobs=50 --memory-limit=max --server=https://en.uesp.net
+	sleep 1
+	php71 $RJ --maxjobs=10 --memory-limit=max --server=https://en.uesp.net
+	sleep 1
 		
 		# Unsure if I have to run seperate jobs for the translation project wikis
-	php71 $RJ --type="enotifNotify" --memory-limit=max --uesplang=pt
-	php71 $RJ --type="htmlCacheUpdate" --maxjobs=50 --memory-limit=max --uesplang=pt
-	php71 $RJ --type="webVideoTranscode" --maxjobs=5 --memory-limit=max --uesplang=pt
-	php71 $RJ --maxjobs=10 --memory-limit=max --uesplang=pt
+	php71 $RJ --type="enotifNotify" --memory-limit=max --server=https://pt.uesp.net
+	sleep 1
+	php71 $RJ --type="htmlCacheUpdate" --maxjobs=50 --memory-limit=max --server=https://pt.uesp.net
+	sleep 1
+	php71 $RJ --type="webVideoTranscode" --maxjobs=5 --memory-limit=max --server=https://pt.uesp.net
+	sleep 1
+	php71 $RJ --maxjobs=10 --memory-limit=max --server=https://pt.uesp.net
+	sleep 1
 	
-	php71 $RJ --type="enotifNotify" --memory-limit=max --uesplang=it
-	php71 $RJ --type="htmlCacheUpdate" --maxjobs=50 --memory-limit=max --uesplang=it
-	php71 $RJ --type="webVideoTranscode" --maxjobs=5 --memory-limit=max --uesplang=it
-	php71 $RJ --maxjobs=10 --memory-limit=max --uesplang=it
+	php71 $RJ --type="enotifNotify" --memory-limit=max --server=https://it.uesp.net
+	sleep 1
+	php71 $RJ --type="htmlCacheUpdate" --maxjobs=50 --memory-limit=max --server=https://it.uesp.net
+	sleep 1
+	php71 $RJ --type="webVideoTranscode" --maxjobs=5 --memory-limit=max --server=https://it.uesp.net
+	sleep 1
+	php71 $RJ --maxjobs=10 --memory-limit=max --server=https://it.uesp.net
+	sleep 1
 	
-	php71 $RJ --type="enotifNotify" --memory-limit=max --uesplang=ar
-	php71 $RJ --type="htmlCacheUpdate" --maxjobs=50 --memory-limit=max --uesplang=ar
-	php71 $RJ --type="webVideoTranscode" --maxjobs=5 --memory-limit=max --uesplang=ar
-	php71 $RJ --maxjobs=10 --memory-limit=max --uesplang=ar
+	php71 $RJ --type="enotifNotify" --memory-limit=max --server=https://ar.uesp.net
+	sleep 1
+	php71 $RJ --type="htmlCacheUpdate" --maxjobs=50 --memory-limit=max --server=https://ar.uesp.net
+	sleep 1
+	php71 $RJ --type="webVideoTranscode" --maxjobs=5 --memory-limit=max --server=https://ar.uesp.net
+	sleep 1
+	php71 $RJ --maxjobs=10 --memory-limit=max --server=https://ar.uesp.net
+	sleep 1
 	
-	php71 $RJ --type="enotifNotify" --memory-limit=max --uesplang=fr
-	php71 $RJ --type="htmlCacheUpdate" --maxjobs=50 --memory-limit=max --uesplang=fr
-	php71 $RJ --type="webVideoTranscode" --maxjobs=5 --memory-limit=max --uesplang=fr
-	php71 $RJ --maxjobs=10 --memory-limit=max --uesplang=fr
+	php71 $RJ --type="enotifNotify" --memory-limit=max --server=https://fr.uesp.net
+	sleep 1
+	php71 $RJ --type="htmlCacheUpdate" --maxjobs=50 --memory-limit=max --server=https://fr.uesp.net
+	sleep 1
+	php71 $RJ --type="webVideoTranscode" --maxjobs=5 --memory-limit=max --server=https://fr.uesp.net
+	sleep 1
+	php71 $RJ --maxjobs=10 --memory-limit=max --server=https://fr.uesp.net
 	
 		# Wait some seconds to let the CPU do other things, like handling web requests, etc
-	echo Waiting for 1 seconds...
-	sleep 1
+	echo Waiting for 10 seconds...
+	sleep 10
 done
 
 popd

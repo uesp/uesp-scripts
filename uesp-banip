@@ -41,7 +41,7 @@ function checkip() {
                 return 0
         fi
 
-        IPCHECK=`echo "$IP" | egrep '^[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}$' `
+        IPCHECK=`echo "$IP" | egrep '^[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}(/[[:digit:]]{1,2})?$' `
 
         if [ -z $IPCHECK ]
         then
@@ -49,7 +49,7 @@ function checkip() {
                 return 0
         fi
 
-        LOCALCHECK=`echo "$IP" | egrep '^127\.0\.0\.[[:digit:]]{1,3}$' `
+        LOCALCHECK=`echo "$IP" | egrep '^127\.0\.0\.[[:digit:]]{1,3}.*$' `
 
         if [ ! -z $LOCALCHECK ]
         then
