@@ -66,11 +66,11 @@ def LoadSecrets():
     fp = open(SECRETS_FILE)
     secrets = fp.read()
     fp.close()
-    exec(secrets) in globals()
+    exec((secrets), globals())
 
 
 def CreateDeployTable():
-    if (GetVerboseLevel()): print "Creating table {0}.{1}".format(DB_DATABASE, DB_TABLE)
+    if (GetVerboseLevel()): print("Creating table {0}.{1}".format(DB_DATABASE, DB_TABLE))
     
     HeaderStr = "CREATE TABLE {0}.{1} (".format(DB_DATABASE, DB_TABLE)
     TableDef = """
@@ -88,7 +88,7 @@ def CreateDeployTable():
                 message TEXT NOT NULL
                 """
     QueryStr = HeaderStr + TableDef + ") ENGINE=MYISAM;"
-    if (GetVerboseLevel() >= 2): print "\t{0}".format(QueryStr)
+    if (GetVerboseLevel() >= 2): print("\t{0}".format(QueryStr))
     g_DB.query(QueryStr)
     return True
 
@@ -96,7 +96,7 @@ def CreateDeployTable():
 def InitDatabase():
     global g_DB
     
-    if (GetVerboseLevel() > 1): print "Trying to connect to MySQL database {0} on {1}:{2} as {3}".format(DB_DATABASE, DB_SERVER, DB_PORT, DB_USER)
+    if (GetVerboseLevel() > 1): print("Trying to connect to MySQL database {0} on {1}:{2} as {3}".format(DB_DATABASE, DB_SERVER, DB_PORT, DB_USER))
     g_DB = mdb.connect(host=DB_SERVER, user=DB_USER, passwd=DB_PASSWORD, db=DB_DATABASE, port=DB_PORT)
     
     QueryStr = "SELECT * FROM information_schema.tables WHERE table_schema='{0}' AND table_name='{1}' LIMIT 1;".format(DB_DATABASE, DB_TABLE)
@@ -121,13 +121,15 @@ def DoesPathExist(pathname):
     RemotePath = ExtractFileName(pathname)
     
     Cmd = ['ssh', ServerName, 'test -d ' + pipes.quote(RemotePath)]
-    if (GetVerboseLevel() > 1): print "\tCmd: {0}".format(Cmd)
+    if (GetVerboseLevel() > 1): print("\tCmd: {0}".format(Cmd))
     
     return subprocess.call(Cmd) == 0
 
 
 def GetRevisionNumber():
     global g_SourcePath
+
+    return ""
     
     currentPath = os.getcwd()
     os.chdir(os.path.abspath(g_SourcePath))
@@ -140,7 +142,7 @@ def GetRevisionNumber():
     except ValueError:
         RevNum = ""
     
-    if (GetVerboseLevel()): print "Got '{0}' for the revision number".format(RevNum)
+    if (GetVerboseLevel()): print("Got '{0}' for the revision number".format(RevNum))
     
     os.chdir(currentPath)
     return RevNum
@@ -171,7 +173,7 @@ def CompareSourceDestPaths(source, dest):
     except:
         return False
     
-    if (GetVerboseLevel() > 1): print "\tCompareSourceDestPaths( {0}, {1} )".format(source, dest)
+    if (GetVerboseLevel() > 1): print("\tCompareSourceDestPaths( {0}, {1} )".format(source, dest))
     return True
 
 
@@ -181,39 +183,39 @@ def StripLastSlash(path):
 
 
 def DisplayError(destination, errormsg):
-    print errormsg
+    print(errormsg)
     AddDeployLog(destination, errormsg)
     return False
 
 
 def AddDeployLog(destination, error=""):
-    OptionStr = g_DB.escape_string(', '.join('%s=%s' % (k,v) for k,v in vars(g_InputOptions).items()))
-    SourcePath = g_DB.escape_string(os.path.abspath(g_SourcePath))
-    DestPath = g_DB.escape_string(destination)
+    OptionStr = g_DB.escape_string(', '.join('%s=%s' % (k,v) for k,v in list(vars(g_InputOptions).items()))).decode("ascii")
+    SourcePath = g_DB.escape_string(os.path.abspath(g_SourcePath)).decode("ascii")
+    DestPath = g_DB.escape_string(destination).decode("ascii")
     
     if (not IsBackup()):
         BackupPath = ""
     else:
-        BackupPath = g_DB.escape_string(os.path.abspath(g_LastBackupPath))
+        BackupPath = g_DB.escape_string(os.path.abspath(g_LastBackupPath)).decode("ascii")
     
     with open (g_InputOptions.deployfile, "r") as myfile:
-        DeployFile = g_DB.escape_string(myfile.read())
+        DeployFile = g_DB.escape_string(myfile.read()).decode("ascii")
     
     HeaderStr = "INSERT INTO {0}.{1} (username, appname, options, source, destination, backuppath, error, deployfile, revision, message) ".format(DB_DATABASE, DB_TABLE)
     ValueStr = "VALUES ('{0}', '{1}', \"{2}\", '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}');".format(
-                                                                                    g_DB.escape_string(getpass.getuser()),
-                                                                                    g_DB.escape_string(GetDeployParamValue("name")),
+                                                                                    g_DB.escape_string(getpass.getuser()).decode("ascii"),
+                                                                                    g_DB.escape_string(GetDeployParamValue("name")).decode("ascii"),
                                                                                     OptionStr,
                                                                                     SourcePath,
                                                                                     DestPath,
                                                                                     BackupPath,
-                                                                                    g_DB.escape_string(error),
+                                                                                    g_DB.escape_string(error).decode("ascii"),
                                                                                     DeployFile,
                                                                                     g_DB.escape_string(g_RevisionNumber),
-                                                                                    g_DB.escape_string(GetDeployMessage())) 
+                                                                                    g_DB.escape_string(GetDeployMessage()).decode("ascii")) 
     QueryStr = HeaderStr + ValueStr
     
-    if (GetVerboseLevel() >= 2): print "\tAdding deploy log database row:\n\t\t{0}".format(QueryStr)
+    if (GetVerboseLevel() >= 2): print("\tAdding deploy log database row:\n\t\t{0}".format(QueryStr))
     
     g_DB.query(QueryStr)
     
@@ -377,7 +379,7 @@ def ExtractPathName(path):
 
 def LoadDeployFile(filename):
     global g_DeployParams
-    print "Loading deploy file '{0}'...".format(filename)
+    print("Loading deploy file '{0}'...".format(filename))
 
     f = open(filename)
     lines = f.readlines()
@@ -392,9 +394,9 @@ def LoadDeployFile(filename):
         value = value.strip()
         g_DeployParams.append((variable, value))
         
-        if (GetVerboseLevel() >= 2): print "\t{0} = {1}".format(variable, value)        
+        if (GetVerboseLevel() >= 2): print("\t{0} = {1}".format(variable, value))        
 
-    if (GetVerboseLevel()): print "\tFound and parsed {0} parameters".format(len(g_DeployParams))
+    if (GetVerboseLevel()): print("\tFound and parsed {0} parameters".format(len(g_DeployParams)))
 
 
 def CreateRsyncCommand(source, dest, optargs=[]):
@@ -416,7 +418,7 @@ def CreateRsyncCommand(source, dest, optargs=[]):
     Cmd.append(source)
     Cmd.append(dest)
 
-    if (GetVerboseLevel() > 1): print "\trsync cmd: {0}".format(' '.join(Cmd))
+    if (GetVerboseLevel() > 1): print("\trsync cmd: {0}".format(' '.join(Cmd)))
     return Cmd
 
 
@@ -428,21 +430,21 @@ def CreateBackup(destination):
     Pathname   = ExtractFileName(destination)
     
     if (Pathname == '/dev/null'):
-        if (GetVerboseLevel() > 1): print "\tSkipping backup of /dev/null destination'..."
+        if (GetVerboseLevel() > 1): print("\tSkipping backup of /dev/null destination'...")
         return True
     
     if (not DoesPathExist(destination)):
-        print "\tSkipping backup of not existant destination '{0}'!".format(destination)
+        print("\tSkipping backup of not existant destination '{0}'!".format(destination))
         return True
     
     if (not CreateBackupPath(ServerName, GetBackupPath())):
         DisplayError(destination, "\tError creating the temporary path for staged deployment!")
         return False
     
-    print "\tCreating backup of existing source in '{0}'...".format(destination)
+    print("\tCreating backup of existing source in '{0}'...".format(destination))
     BackupPath = GetBackupPath()
     BackupPath += "{0}_{1}_{2}/".format(GetDeployParamValue("name"), ExtractServerName(destination), datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
-    if (GetVerboseLevel()): print "\tBacking up files to '{0}'...".format(BackupPath)
+    if (GetVerboseLevel()): print("\tBacking up files to '{0}'...".format(BackupPath))
     g_LastBackupPath = BackupPath
 
     if not os.path.exists(BackupPath):
@@ -454,7 +456,7 @@ def CreateBackup(destination):
         Result = subprocess.call(RsyncCmd, shell=False)
     
     if (Result != 0):
-        print "\tError: Rsync transfer failed!"
+        print("\tError: Rsync transfer failed!")
         g_ErrorCount += 1
         return False
         
@@ -467,36 +469,36 @@ def DoMakePath(path):
     ServerName = ExtractServerName(path)
     
     if (not ServerName):
-        if (GetVerboseLevel() > 0): print "\tEnsuring the local path '{0}' exists.".format(path)
+        if (GetVerboseLevel() > 0): print("\tEnsuring the local path '{0}' exists.".format(path))
         if (os.path.exists(path)): return True
         
         Cmd = "sudo mkdir -p {0}".format(path, getpass.getuser())
-        if (GetVerboseLevel() > 1): print "\tMkdir Cmd: {0}".format(SshCmd)
+        if (GetVerboseLevel() > 1): print("\tMkdir Cmd: {0}".format(SshCmd))
         
         mkdir = subprocess.Popen(Cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         mkdir.wait()
         error = mkdir.stderr.readlines()
         
         if (mkdir.returncode != 0):
-            print "\tError: Mkdir command returned {1} (stderr='{0}')!".format(error, mkdir.returncode)
+            print("\tError: Mkdir command returned {1} (stderr='{0}')!".format(error, mkdir.returncode))
             g_ErrorCount += 1
             return False
         
         Cmd = "sudo chown {0}:{0} {1}".format(getpass.getuser(), path)
-        if (GetVerboseLevel() > 1): print "\tChanging the ownership of local path '{0}'...".format(path)
-        if (GetVerboseLevel() > 2): print "\tChown Cmd: {0}".format(Cmd)
+        if (GetVerboseLevel() > 1): print("\tChanging the ownership of local path '{0}'...".format(path))
+        if (GetVerboseLevel() > 2): print("\tChown Cmd: {0}".format(Cmd))
         
         chown = subprocess.Popen(Cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         chown.wait()
         error = chown.stderr.readlines()
         
         if (chown.returncode != 0):
-            print "\tError: Chown command returned {1} (stderr='{0}')!".format(error, chown.returncode)
+            print("\tError: Chown command returned {1} (stderr='{0}')!".format(error, chown.returncode))
             g_ErrorCount += 1
             return False
         
     else:
-        if (GetVerboseLevel() > 0): print "\tEnsuring the remote path '{0}' exists on {1}...".format(path, ServerName)
+        if (GetVerboseLevel() > 0): print("\tEnsuring the remote path '{0}' exists on {1}...".format(path, ServerName))
         
         RemotePath = ExtractFileName(path)
         if (DoesPathExist(ServerName + ':' + RemotePath)): return True
@@ -504,30 +506,30 @@ def DoMakePath(path):
         Cmd = "sudo mkdir -p {0}".format(RemotePath, getpass.getuser())
         SshCmd = ["ssh", "-t", ServerName, Cmd]
         
-        if (GetVerboseLevel() > 1): print "\tCreating the remote path '{0}' on '{1}'...".format(RemotePath, ServerName)
-        if (GetVerboseLevel() > 2): print "\tMkdir Cmd: {0}".format(SshCmd)
+        if (GetVerboseLevel() > 1): print("\tCreating the remote path '{0}' on '{1}'...".format(RemotePath, ServerName))
+        if (GetVerboseLevel() > 2): print("\tMkdir Cmd: {0}".format(SshCmd))
         
         ssh = subprocess.Popen(SshCmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         ssh.wait()
         error = ssh.stderr.readlines()
         
         if (ssh.returncode != 0):
-            print "\tError: Remote ssh command returned {1} (stderr='{0}')!".format(error, ssh.returncode)
+            print("\tError: Remote ssh command returned {1} (stderr='{0}')!".format(error, ssh.returncode))
             g_ErrorCount += 1
             return False
         
         Cmd = "sudo chown {0}:{0} {1}".format(getpass.getuser(), RemotePath)
         SshCmd = ["ssh", "-t", ServerName, Cmd]
         
-        if (GetVerboseLevel() > 1): print "\tChanging the ownership of remote path '{0}' on '{1}'...".format(RemotePath, ServerName)
-        if (GetVerboseLevel() > 2): print "\tChown Cmd: {0}".format(SshCmd)
+        if (GetVerboseLevel() > 1): print("\tChanging the ownership of remote path '{0}' on '{1}'...".format(RemotePath, ServerName))
+        if (GetVerboseLevel() > 2): print("\tChown Cmd: {0}".format(SshCmd))
         
         ssh = subprocess.Popen(SshCmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         ssh.wait()
         error = ssh.stderr.readlines()
         
         if (ssh.returncode != 0):
-            print "\tError: Remote ssh command returned {1} (stderr='{0}')!".format(error, ssh.returncode)
+            print("\tError: Remote ssh command returned {1} (stderr='{0}')!".format(error, ssh.returncode))
             g_ErrorCount += 1
             return False
         
@@ -538,20 +540,20 @@ def DeployFiles(destination):
     global g_ErrorCount
     
     if (ExtractFileName(destination) == '/dev/null'):
-        if (GetVerboseLevel() > 0): print "\tSkipping deployment of files to /dev/null destination'..."
+        if (GetVerboseLevel() > 0): print("\tSkipping deployment of files to /dev/null destination'...")
         return True
     
     if (not DoMakePath(destination)): return False
         
     RsyncCmd = CreateRsyncCommand(g_SourcePath, destination)
     
-    if (GetVerboseLevel() > 0): print "\tCopying files from {0} to {1}...".format(g_SourcePath, destination)
+    if (GetVerboseLevel() > 0): print("\tCopying files from {0} to {1}...".format(g_SourcePath, destination))
     
     with open(os.devnull, "w") as fnull: #stderr=fnull,
         Result = subprocess.call(RsyncCmd, shell=False)
         
     if (Result != 0):
-        print "\tError: Rsync command returned {0}!".format(Result)
+        print("\tError: Rsync command returned {0}!".format(Result))
         g_ErrorCount += 1
         return False
     
@@ -561,7 +563,7 @@ def DeployFiles(destination):
 def DoDeleteFile(destination, filename):
     global g_ErrorCount
     
-    if (GetVerboseLevel()): print "\tDeleting file '{0}' from destination.".format(filename)
+    if (GetVerboseLevel()): print("\tDeleting file '{0}' from destination.".format(filename))
     
     ServerName = ExtractServerName(destination)
     
@@ -578,11 +580,11 @@ def DoDeleteFile(destination, filename):
         error = ssh.stderr.readlines()
         
         if error != []:
-            print "\tError: Remote ssh command returned error: {0}".format(error)
+            print("\tError: Remote ssh command returned error: {0}".format(error))
             g_ErrorCount += 1
             return False
         elif (ssh.returncode != 0):
-            print "\tError: Remote ssh command returned {0}".format(ssh.returncode)
+            print("\tError: Remote ssh command returned {0}".format(ssh.returncode))
             g_ErrorCount += 1
             return False
         
@@ -608,7 +610,7 @@ def DoChangeOwnership(chowncmd):
     global g_ErrorCount
     
     Cmd = "sudo chown " + chowncmd
-    if (GetVerboseLevel() > 1): print "\tChown Command: {0}".format(Cmd)
+    if (GetVerboseLevel() > 1): print("\tChown Command: {0}".format(Cmd))
     
     childproc = subprocess.Popen(Cmd, shell=True)
     childproc.communicate()
@@ -616,7 +618,7 @@ def DoChangeOwnership(chowncmd):
     Result = childproc.returncode
     
     if (Result != 0):
-        print "\tError: Local chown command failed!"
+        print("\tError: Local chown command failed!")
         g_ErrorCount += 1
         return False
     
@@ -627,7 +629,7 @@ def DoChangePermission(chmodcmd):
     global g_ErrorCount
     
     Cmd = "sudo chmod " + chmodcmd
-    if (GetVerboseLevel() > 1): print "\tChmod Command: {0}".format(Cmd)
+    if (GetVerboseLevel() > 1): print("\tChmod Command: {0}".format(Cmd))
     
     childproc = subprocess.Popen(Cmd, shell=True)
     childproc.communicate()
@@ -635,7 +637,7 @@ def DoChangePermission(chmodcmd):
     Result = childproc.returncode
     
     if (Result != 0):
-        print "\tError: Local chmod command failed!"
+        print("\tError: Local chmod command failed!")
         g_ErrorCount += 1
         return False
     
@@ -652,7 +654,7 @@ def DoChangeRemoteOwnership(destination, chowncmd):
     if (not ServerName): return DoChangeOwnership(BaseCmd)
     
     Cmd = "ssh -t -q {0} sudo chown {1}".format(ServerName, BaseCmd)
-    if (GetVerboseLevel() > 1): print "\tRemote Chown Command: {0}".format(Cmd)
+    if (GetVerboseLevel() > 1): print("\tRemote Chown Command: {0}".format(Cmd))
     
     childproc = subprocess.Popen(Cmd, shell=True)
     childproc.communicate()
@@ -660,7 +662,7 @@ def DoChangeRemoteOwnership(destination, chowncmd):
     Result = childproc.returncode
     
     if (Result != 0):
-        print "\tError: Remote chown command failed!"
+        print("\tError: Remote chown command failed!")
         g_ErrorCount += 1
         return False
     
@@ -677,7 +679,7 @@ def DoChangeRemotePermission(destination, chmodcmd):
     if (not ServerName): return DoChangePermission(BaseCmd)
     
     Cmd = "ssh -t -q {0} sudo chmod {1}".format(ServerName, BaseCmd)
-    if (GetVerboseLevel() > 1): print "\tRemote Chmod Command: {0}".format(Cmd)
+    if (GetVerboseLevel() > 1): print("\tRemote Chmod Command: {0}".format(Cmd))
     
     childproc = subprocess.Popen(Cmd, shell=True)
     childproc.communicate()
@@ -685,7 +687,7 @@ def DoChangeRemotePermission(destination, chmodcmd):
     Result = childproc.returncode
     
     if (Result != 0):
-        print "\tError: Remote chmod command failed!"
+        print("\tError: Remote chmod command failed!")
         g_ErrorCount += 1
         return False
     
@@ -695,7 +697,7 @@ def DoChangeRemotePermission(destination, chmodcmd):
 def ChangeSourceOwnership():
     ChownSources = GetDeployParam("chown_source")
     
-    if (GetVerboseLevel() > 0 and len(ChownSources) > 0): print "\tChanging ownership on source..."
+    if (GetVerboseLevel() > 0 and len(ChownSources) > 0): print("\tChanging ownership on source...")
     
     #if (GetVerboseLevel() > 0 and len(ChownSources) > 0):
         #print "Changing source ownership on {0} entries.".format(len(ChownSources))
@@ -713,7 +715,7 @@ def ChangeSourceOwnership():
 def ChangeDestOwnership(destination):
     ChownDests = GetDeployParam("chown_dest")
     
-    if (GetVerboseLevel() > 0 and len(ChownDests) > 0): print "\tChanging ownership on destination..."
+    if (GetVerboseLevel() > 0 and len(ChownDests) > 0): print("\tChanging ownership on destination...")
     
     #if (GetVerboseLevel() > 0 and len(ChownDests) > 0):
         #print "Changing destination ownership on {0} entries.".format(len(ChownDests))
@@ -731,7 +733,7 @@ def ChangeDestOwnership(destination):
 def ChangeSourcePermission():
     ChmodSources = GetDeployParam("chmod_source")
     
-    if (GetVerboseLevel() > 0 and len(ChmodSources) > 0): print "\tChanging permission on source..."
+    if (GetVerboseLevel() > 0 and len(ChmodSources) > 0): print("\tChanging permission on source...")
 
     for chmodsource in ChmodSources:
         if (len(chmodsource) > 1):
@@ -744,7 +746,7 @@ def ChangeSourcePermission():
 def ChangeDestPermission(destination):
     ChmodDests = GetDeployParam("chmod_dest")
     
-    if (GetVerboseLevel() > 0): print "\tChanging permission on destination..."
+    if (GetVerboseLevel() > 0): print("\tChanging permission on destination...")
 
     for chmoddest in ChmodDests:
         if (len(chmoddest) > 1):
@@ -780,7 +782,7 @@ def DeployManualCopy(destination):
         if (not MatchServerName(cmdresult[0], ServerName)): continue
         
         BaseCmd = cmdresult[1].replace("{source}", g_SourcePath).replace("{dest}", destination).replace("{destserver}", DestServer).strip()
-        if (GetVerboseLevel() > 0): print "\tManually copying file: {0}".format(BaseCmd)
+        if (GetVerboseLevel() > 0): print("\tManually copying file: {0}".format(BaseCmd))
         
         SplitCmd = shlex.split(BaseCmd)
         
@@ -788,20 +790,20 @@ def DeployManualCopy(destination):
             PathName = ExtractPathName(SplitCmd[1])
             
             if (not DoCreatePath(destination, PathName)):
-                print "\tError: Failed to create the path...aborting manual copy of '{0}'!".format(SplitCmd[0])
+                print("\tError: Failed to create the path...aborting manual copy of '{0}'!".format(SplitCmd[0]))
                 continue
         
         ScpCmd = "scp -pqr "
         if (GetVerboseLevel() > 2): ScpCmd += "-v "
         ScpCmd += BaseCmd
-        if (GetVerboseLevel() > 1): print "\tScp command: {0}".format(ScpCmd)
+        if (GetVerboseLevel() > 1): print("\tScp command: {0}".format(ScpCmd))
         
         childproc = subprocess.Popen(ScpCmd, shell=True)
         childproc.communicate()
         Result = childproc.returncode
         
         if (Result != 0):
-            print '\tError: scp copy command failed!'
+            print('\tError: scp copy command failed!')
             g_ErrorCount += 1
             return False
 
@@ -836,13 +838,13 @@ def FindStringInFile(filename, findstring):
         FilePath = ExtractFileName(filename)
         Cmd = ["ssh", ServerName, "grep -c {1} {0}".format(FilePath, ShellEscapeString(findstring))]
         
-    if (GetVerboseLevel() > 1): print "\tgrep cmd: {0}".format(Cmd)
+    if (GetVerboseLevel() > 1): print("\tgrep cmd: {0}".format(Cmd))
     
     try:
         GrepResult = subprocess.Popen(Cmd, shell=False, stdout = subprocess.PIPE).communicate()[0].strip()
-        if (GetVerboseLevel() > 1): print "\tgrep result = {0}".format(GrepResult)
+        if (GetVerboseLevel() > 1): print("\tgrep result = {0}".format(GrepResult))
     except Exception as e:
-        if (GetVerboseLevel() > 1): print "\t{0}".format(e)
+        if (GetVerboseLevel() > 1): print("\t{0}".format(e))
         return False
     
     if (not GrepResult): return False
@@ -862,18 +864,18 @@ def AddStringToFile(filename, addstring):
         FilePath = ExtractFileName(filename)
         Cmd = ["ssh", ServerName, "echo {1} >> {0}".format(FilePath, ShellEscapeString(addstring))]
         
-    if (GetVerboseLevel() > 1): print "\tappend file cmd: {0}".format(Cmd)
+    if (GetVerboseLevel() > 1): print("\tappend file cmd: {0}".format(Cmd))
     
     try:
         appendcmd = subprocess.Popen(Cmd, shell=False)
         appendcmd.wait()
         
         if (appendcmd.returncode != 0):
-            print "\tError: Failed to append data to file '{0}' on '{1}'!".format(FilePath, ServerName)
+            print("\tError: Failed to append data to file '{0}' on '{1}'!".format(FilePath, ServerName))
             g_ErrorCount += 1
             return False
     except:
-        print "\tError: Failed to append data to file '{0}' on '{1}'!".format(FilePath, ServerName)
+        print("\tError: Failed to append data to file '{0}' on '{1}'!".format(FilePath, ServerName))
         g_ErrorCount += 1
         return False
         
@@ -888,18 +890,18 @@ def DoAddLineDest(destination, addline):
     splitaddline = addline.split(':', 1)
     
     if (len(splitaddline) <= 1):
-        if (GetVerboseLevel() > 0): print "\tError: Improperly formatted addline command found: {0}".addline
+        if (GetVerboseLevel() > 0): print("\tError: Improperly formatted addline command found: {0}".addline)
         g_ErrorCount += 1 
         return True
     
     FileToModify = splitaddline[0].strip()
     LineToAdd    = splitaddline[1].strip()
-    if (GetVerboseLevel() > 1): print "\tAdding line '{1}' to destination file '{0}'.".format(FileToModify, LineToAdd)
+    if (GetVerboseLevel() > 1): print("\tAdding line '{1}' to destination file '{0}'.".format(FileToModify, LineToAdd))
     
     Filename = destination + FileToModify
     
     if (FindStringInFile(Filename, LineToAdd)):
-        if (GetVerboseLevel() > 0): print "\tLine '{1}' already exists in file '{0}'...skipping".format(FileToModify, LineToAdd)
+        if (GetVerboseLevel() > 0): print("\tLine '{1}' already exists in file '{0}'...skipping".format(FileToModify, LineToAdd))
         return True
     
     if not AddStringToFile(Filename, LineToAdd): return False
@@ -909,7 +911,7 @@ def DoAddLineDest(destination, addline):
 def AddLinesDest(destination):
     
     if (ExtractFileName(destination) == '/dev/null'):
-        if (GetVerboseLevel() > 1): print "\tSkipping adding lines to files in /dev/null destination'..."
+        if (GetVerboseLevel() > 1): print("\tSkipping adding lines to files in /dev/null destination'...")
         return True
     
     AddLines = GetDeployParam("addline")
@@ -928,7 +930,7 @@ def DoCreatePath(destination, pathname):
     DestPathName = ExtractFileName(destination)
     pathname = pathname.replace('{dest}', DestPathName)
     
-    if (GetVerboseLevel() > 0): print "\tCreating path '{0}' on destination {1}...".format(pathname, (ServerName if ServerName else localhost))
+    if (GetVerboseLevel() > 0): print("\tCreating path '{0}' on destination {1}...".format(pathname, (ServerName if ServerName else localhost)))
     
     if (len(pathname) == 0):
         DisplayError(destination, "\tError: Can't create empty path!")
@@ -940,7 +942,7 @@ def DoCreatePath(destination, pathname):
     else:
         fullPath = pathname
         
-    if (GetVerboseLevel() > 1): print "\tCreating path '{0}'...".format(fullPath)
+    if (GetVerboseLevel() > 1): print("\tCreating path '{0}'...".format(fullPath))
     
     return DoMakePath(fullPath)
 
@@ -962,7 +964,7 @@ def CreateBackupPath(ServerName, BackupPath):
     else:
         FullBackupPath = ServerName + ':' + BackupPath
         
-    if (GetVerboseLevel() > 1): print "\tEnsuring the backup path {0} exists...".format(FullBackupPath)
+    if (GetVerboseLevel() > 1): print("\tEnsuring the backup path {0} exists...".format(FullBackupPath))
         
     if (not DoesPathExist(FullBackupPath)): 
         if (not DoMakePath(FullBackupPath)): return False
@@ -977,10 +979,10 @@ def CreateBackupPath(ServerName, BackupPath):
 def CopyStagedFiles(destination, StagedPath):
     global g_ErrorCount
     
-    if (GetVerboseLevel() > 0): print "\tCopying files to the staging directory..."
+    if (GetVerboseLevel() > 0): print("\tCopying files to the staging directory...")
     
     if (not DoMakePath(destination)):
-        print "\tError: The destination path does not exist and cannot be created!"
+        print("\tError: The destination path does not exist and cannot be created!")
         return False
     
     ServerName = ExtractServerName(destination)
@@ -992,10 +994,10 @@ def CopyStagedFiles(destination, StagedPath):
         FullStagedPath = StagedPath
         
     if (not DoMakePath(FullStagedPath)):
-        print "\tError: Failed to create the temporary staging path...aborting deployment!"
+        print("\tError: Failed to create the temporary staging path...aborting deployment!")
         return False
     
-    if (GetVerboseLevel() > 0): print "\tUsing staging directory {0}". format(FullStagedPath)
+    if (GetVerboseLevel() > 0): print("\tUsing staging directory {0}". format(FullStagedPath))
     
     IgnoreFiles = GetDeployParam("ignore")
     ExcludeCmd = ""
@@ -1005,7 +1007,7 @@ def CopyStagedFiles(destination, StagedPath):
         ExcludeCmd += "--exclude={0} ".format(file[1])
     
     RsyncCmd = 'rsync -a {3} {2} {0} {1}'.format(destination, StagedPath, '-v' if (GetVerboseLevel() > 2) else '', ExcludeCmd)
-    if (GetVerboseLevel() > 1): print "\tRsync command: {0}". format(RsyncCmd)
+    if (GetVerboseLevel() > 1): print("\tRsync command: {0}". format(RsyncCmd))
     
     #ScpCmd = "scp -pqr {2} {0} {1}".format(destination, StagedPath, '-v' if (GetVerboseLevel() > 2) else '')
     #if (GetVerboseLevel() > 1): print "\tScp command: {0}". format(ScpCmd)
@@ -1015,7 +1017,7 @@ def CopyStagedFiles(destination, StagedPath):
     Result = childproc.returncode
         
     if (Result != 0):
-        print "\tError: Failed to copy files to the staging directory!"
+        print("\tError: Failed to copy files to the staging directory!")
         g_ErrorCount += 1
         return False
     
@@ -1025,7 +1027,7 @@ def CopyStagedFiles(destination, StagedPath):
 def SwitchStagedDeploy(destination, StagedPath):
     global g_ErrorCount
     
-    if (GetVerboseLevel() > 0): print "\tSwapping staged and original destination directories..."
+    if (GetVerboseLevel() > 0): print("\tSwapping staged and original destination directories...")
     
     TmpPath = StagedPath[:-1] + '_tmp'
     ServerName = ExtractServerName(destination)
@@ -1033,18 +1035,18 @@ def SwitchStagedDeploy(destination, StagedPath):
     
     MvCmd = 'mv {1} {2}; mv {3} {1}; mv {2} {3}'.format(ServerName, PathName, TmpPath, StripLastSlash(StagedPath))
     SshCmd = ['ssh', '-t', ServerName, MvCmd]
-    if (GetVerboseLevel() > 1): print "\tSsh command: {0}". format(SshCmd)
+    if (GetVerboseLevel() > 1): print("\tSsh command: {0}". format(SshCmd))
     
     childproc = subprocess.Popen(SshCmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     childproc.communicate()
     Result = childproc.returncode
     
     if (Result != 0):
-        print "\tError: Failed to swap staged and destination directories!"
+        print("\tError: Failed to swap staged and destination directories!")
         g_ErrorCount += 1
         return False
     
-    if (GetVerboseLevel() > 0): print "\tOriginal destination stored at {0}...".format(StagedPath)
+    if (GetVerboseLevel() > 0): print("\tOriginal destination stored at {0}...".format(StagedPath))
     return True
 
 
@@ -1056,17 +1058,17 @@ def DoOneDeployStaged(destination):
     
     if (IsLocalOnly()):
         if (not MatchServerName(g_HostName, ServerName)):
-            if (GetVerboseLevel() > 0): print "Skipping deployment to {0}.".format(destination)
+            if (GetVerboseLevel() > 0): print("Skipping deployment to {0}.".format(destination))
             return True
     elif (IsServerOnly()):
         if (not MatchServerName(g_InputOptions.serveronly, ServerName)):
-            if (GetVerboseLevel() > 0): print "Skipping deployment to {0}.".format(destination)
+            if (GetVerboseLevel() > 0): print("Skipping deployment to {0}.".format(destination))
             return True
     
-    print "Deploying to '{0}'...".format(destination)
+    print("Deploying to '{0}'...".format(destination))
     
     if (CompareSourceDestPaths(g_SourcePath, destination)):
-        print "\tWarning: The source and destination paths are the same...skipping deployment!"
+        print("\tWarning: The source and destination paths are the same...skipping deployment!")
         return True
     
     if (not CreateBackupPath(ServerName, GetBackupPath())):
@@ -1116,11 +1118,11 @@ def DoOneDeployStaged(destination):
         return False
     
     if (not SwitchStagedDeploy(destination, StagedPath)):
-        print "\tCRITICAL: Failed to swap staging path with destination...things may be broken!"
+        print("\tCRITICAL: Failed to swap staging path with destination...things may be broken!")
         return False
     
     AddDeployLog(destination)
-    print "\tSuccessfully completed deployment!"
+    print("\tSuccessfully completed deployment!")
     g_DeployDestCount += 1
 
     return True
@@ -1134,17 +1136,17 @@ def DoOneDeploy(destination):
     
     if (IsLocalOnly()):
         if (not MatchServerName(g_HostName, ServerName)):
-            if (GetVerboseLevel() > 0): print "Skipping deployment to {0}.".format(destination)
+            if (GetVerboseLevel() > 0): print("Skipping deployment to {0}.".format(destination))
             return True
     elif (IsServerOnly()):
         if (not MatchServerName(g_InputOptions.serveronly, ServerName)):
-            if (GetVerboseLevel() > 0): print "Skipping deployment to {0}.".format(destination)
+            if (GetVerboseLevel() > 0): print("Skipping deployment to {0}.".format(destination))
             return True
     
-    print "Deploying to '{0}'...".format(destination)
+    print("Deploying to '{0}'...".format(destination))
     
     if (CompareSourceDestPaths(g_SourcePath, destination)):
-        print "\tWarning: The source and destination paths are the same...skipping deployment!"
+        print("\tWarning: The source and destination paths are the same...skipping deployment!")
         return True
 
     g_DeployCount += 1
@@ -1183,7 +1185,7 @@ def DoOneDeploy(destination):
         return False
 
     AddDeployLog(destination)
-    print "\tSuccessfully completed deployment!"
+    print("\tSuccessfully completed deployment!")
     g_DeployDestCount += 1
 
     return True
@@ -1204,7 +1206,7 @@ def RunDeployFile(deployValue):
     deployName = TmpSplit[0].strip().lower()
     
     if (len(g_DeployName) > 0 and g_DeployName != deployName and g_DeployName != "all"):
-        if (GetVerboseLevel() > 0): print "Skipping deployment '{0}'...".format(deployName)
+        if (GetVerboseLevel() > 0): print("Skipping deployment '{0}'...".format(deployName))
         return True
     
     deployFile = TmpSplit[1].strip()
@@ -1223,7 +1225,7 @@ def RunDeployFile(deployValue):
     deployFile = os.path.realpath(deployFile)
     deployPath = os.path.realpath(deployPath)
     
-    print "Trying to run deployment '{0}' from file '{1}' in path '{2}'...".format(deployName, deployFile, deployPath)
+    print("Trying to run deployment '{0}' from file '{1}' in path '{2}'...".format(deployName, deployFile, deployPath))
     
     DeployCmd = [ os.path.realpath(__file__) ]
     DeployCmd.extend(sys.argv[1:])
@@ -1256,7 +1258,7 @@ def RunDeployFile(deployValue):
     CurrentPath = os.getcwd()
     os.chdir(deployPath)
     
-    if (GetVerboseLevel() > 0): print "Running deploy command: {0}".format(DeployCmd)    
+    if (GetVerboseLevel() > 0): print("Running deploy command: {0}".format(DeployCmd))    
     
     Result = subprocess.call(DeployCmd)
     
@@ -1264,7 +1266,7 @@ def RunDeployFile(deployValue):
     if (Result != 0): return False
     
     g_DeployFileCount += 1
-    print "\tSuccessfully ran deploy file {0}!".format(deployFile)
+    print("\tSuccessfully ran deploy file {0}!".format(deployFile))
     return True
 
 
@@ -1275,7 +1277,7 @@ def DoNamedDeployFile():
 	AllDeployFiles = GetDeployParam("deployfile")
 	
 	if (len(AllDeployFiles) == 0 or g_DeployName == ""):
-		print "Error: No deployment destinations specified!"
+		print("Error: No deployment destinations specified!")
 		g_ErrorCount += 1
 		return False
 	
@@ -1310,7 +1312,7 @@ def DoNamedDestDeploys():
     AllDests = GetDeployParam("destname")
     
     if (len(AllDests) == 0):
-        print "Error: No deployment named destinations specified!"
+        print("Error: No deployment named destinations specified!")
         g_ErrorCount += 1
         return False
     
@@ -1318,7 +1320,7 @@ def DoNamedDestDeploys():
         if (len(destination) > 1):
             split = re.match('\[([a-zA-Z0-9_]+)\](.*)', destination[1])
             if (split == None or split.group(1) == None or split.group(2) == None):
-                print "Error: Invalid destname format '{0}' found!".format(destination[1])
+                print("Error: Invalid destname format '{0}' found!".format(destination[1]))
                 continue
             
             destName = split.group(1)
@@ -1335,10 +1337,10 @@ def DoNamedDestDeploys():
             if (not Result): return False
     
     if (IsLocalOnly() and g_DeployCount == 0):
-        print "Warning: No deployment occurred as localhost was not found in deploy file '{0}'!".format(g_InputOptions.deployfile)
+        print("Warning: No deployment occurred as localhost was not found in deploy file '{0}'!".format(g_InputOptions.deployfile))
         g_WarningCount += 1
     elif (IsServerOnly() and g_DeployCount == 0):
-        print "Warning: No deployment occurred as {1} was not found in deploy file '{0}'!".format(g_InputOptions.deployfile, g_InputOptions.serveronly)
+        print("Warning: No deployment occurred as {1} was not found in deploy file '{0}'!".format(g_InputOptions.deployfile, g_InputOptions.serveronly))
         g_WarningCount += 1
    
     return True
@@ -1373,7 +1375,7 @@ def DoDeploy():
     AllDeployFiles = GetDeployParam("deployfile")
 
     if (len(AllDests) == 0 and len(AllDeployFiles) == 0):
-        print "Error: No deployment destinations specified!"
+        print("Error: No deployment destinations specified!")
         g_ErrorCount += 1
         return False
 
@@ -1393,10 +1395,10 @@ def DoDeploy():
     if (len(AllDeployFiles) > 0): return True
     
     if (IsLocalOnly() and g_DeployCount == 0):
-        print "Warning: No deployment occurred as localhost was not found in deploy file '{0}'!".format(g_InputOptions.deployfile)
+        print("Warning: No deployment occurred as localhost was not found in deploy file '{0}'!".format(g_InputOptions.deployfile))
         g_WarningCount += 1
     elif (IsServerOnly() and g_DeployCount == 0):
-        print "Warning: No deployment occurred as {1} was not found in deploy file '{0}'!".format(g_InputOptions.deployfile, g_InputOptions.serveronly)
+        print("Warning: No deployment occurred as {1} was not found in deploy file '{0}'!".format(g_InputOptions.deployfile, g_InputOptions.serveronly))
         g_WarningCount += 1
    
     return True
@@ -1410,24 +1412,24 @@ LoadDeployFile(g_InputOptions.deployfile)
 
 if (len(g_InputArgs)) > 0:
     g_DeployName = g_InputArgs[0].lower()
-    if (GetVerboseLevel() > 0): print "Running deployment for just dests/deploys named '{0}'...".format(g_DeployName)
+    if (GetVerboseLevel() > 0): print("Running deployment for just dests/deploys named '{0}'...".format(g_DeployName))
 
 if (GetVerboseLevel()):
-    print "Local hostname is '{0}'".format(GetHostName())
+    print("Local hostname is '{0}'".format(GetHostName()))
 
 LoadSecrets()
 InitDatabase()
 
 g_HostName = GetHostName()
 g_SourcePath = GetSourcePath()
-print "Installing from local path '{0}' ({1})...".format(g_SourcePath, os.path.realpath(g_SourcePath))
+print("Installing from local path '{0}' ({1})...".format(g_SourcePath, os.path.realpath(g_SourcePath)))
 
 g_RevisionNumber = GetRevisionNumber()
 
 if (g_DeployName == ""):
 	DoDeploy()
 elif (g_DeployName == "all"):
-	if (GetVerboseLevel() > 0): print "Running deployment for all dests/deploys..."
+	if (GetVerboseLevel() > 0): print("Running deployment for all dests/deploys...")
 	DoDeploy()
 	DoNamedDestDeploys()
 else:
@@ -1437,13 +1439,11 @@ else:
 CloseDatabase()
 
 if (g_DeployFileCount > 0 and g_DeployCount == 0):
-    print "SUCCESS: Deployed {1} files1".format(g_DeployFileCount)
+    print("SUCCESS: Deployed {1} files1".format(g_DeployFileCount))
     exit(0)
 elif (g_ErrorCount == 0):
-    print "SUCCESS: Deployed to {2} destinations with {0} errors and {1} warnings!".format(g_ErrorCount, g_WarningCount, g_DeployDestCount)
+    print("SUCCESS: Deployed to {2} destinations with {0} errors and {1} warnings!".format(g_ErrorCount, g_WarningCount, g_DeployDestCount))
     exit(0)
 else:
-    print "FAILED: Deployed to {2} destinations {0} errors and {1} warnings!".format(g_ErrorCount, g_WarningCount, g_DeployDestCount)
+    print("FAILED: Deployed to {2} destinations {0} errors and {1} warnings!".format(g_ErrorCount, g_WarningCount, g_DeployDestCount))
     exit(1)
-    
-    
