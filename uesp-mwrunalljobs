@@ -9,7 +9,7 @@ pushd $IP
 while true; do
 		# Job types that need to be run ASAP mo matter how many of them are in the queue
 		# Those jobs should be very "cheap" to run
-	php71 $RJ --memory-limit=max --uesplang=$LANG --maxjobs=1000
+	php74 $RJ --memory-limit=max --uesplang=$LANG --maxjobs=1000
 	sleep 1
 done
 
