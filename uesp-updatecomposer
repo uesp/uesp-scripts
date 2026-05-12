@@ -11,5 +11,5 @@ for f in "${composerListArr[@]}"; do
 	if [ "$f" == "." ]; then
 		f = $(pwd)
 	fi
-	php71 /usr/bin/composer install --working-dir="$f" --no-dev
+	php74 /usr/bin/composer install --working-dir="$f" --no-dev
 done
