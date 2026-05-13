@@ -75,8 +75,8 @@ while true; do
 	php74 $RJ --maxjobs=10 --memory-limit=max --server=https://fr.uesp.net
 	
 		# Wait some seconds to let the CPU do other things, like handling web requests, etc
-	echo Waiting for 10 seconds...
-	sleep 10
+	echo Waiting for 1 seconds...
+	sleep 1
 done
 
 popd
